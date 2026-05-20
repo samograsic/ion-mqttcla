@@ -1,0 +1,29 @@
+# MQTT Convergence Layer Configuration File
+# Copy this file to mqtt.conf and edit with your broker credentials
+# Lines starting with # are comments
+
+# MQTT Broker Address (format: tcp://hostname:port or ssl://hostname:port)
+broker_address=tcp://mqtt.example.com:1883
+
+# MQTT Authentication
+username=your_username
+password=your_password
+
+# MQTT QoS Level (0, 1, or 2)
+# 0 = At most once delivery
+# 1 = At least once delivery (recommended)
+# 2 = Exactly once delivery
+qos=1
+
+# Keepalive Interval (seconds)
+keepalive_interval=20
+
+# Connection Timeout (milliseconds)
+connect_timeout=10000
+
+# Disconnect Timeout (milliseconds)
+disconnect_timeout=10000
+
+# Client ID Prefix
+# Actual client ID will be: <prefix><random_number>
+client_id_prefix=ion_dtn_

@@ -1,0 +1,48 @@
+# Compiled executables
+mqttcli
+mqttclo
+test_mqtt_retention
+
+# Object files
+*.o
+*.obj
+
+# Libraries
+*.a
+*.so
+*.so.*
+*.dylib
+
+# Paho MQTT build artifacts
+paho-mqtt/
+paho.mqtt.c-*.tar.gz
+
+# ION log files
+ion.log
+ionwd.log
+
+# ION configuration backups
+*.rc.backup
+*.rc.beforeCLAv4
+
+# Backup files
+*~
+*.bak
+*.swp
+
+# Editor files
+.vscode/
+.idea/
+*.sublime-*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test files (keep test scripts)
+test_output/
+*.test
+
+# Documentation files (keep main docs)
+mqttImplementationNotes.md
+MQTT_QoS_and_Retention.md

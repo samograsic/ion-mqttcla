@@ -1,0 +1,71 @@
+# ION Configuration Example with MQTT Convergence Layer
+# Node: 1
+# This is an example configuration for a single ION node using MQTT CLA
+
+## begin ionadmin
+1 1 'example.ionconfig'
+s
+
+# Define contacts with remote node 2
+a contact +1 +360000000 1 2 100000
+a contact +1 +360000000 2 1 100000
+
+a range +1 +360000000 2 1 1
+a range +1 +360000000 1 2 1
+
+# Define contact with self (for loopback testing)
+a contact +1 +360000000 1 1 100000
+a range +1 +360000000 1 1 1
+
+m production 1000000
+m consumption 1000000
+e 1
+## end ionadmin
+
+
+## begin bpadmin
+1
+a scheme ipn 'ipnfw' 'ipnadminep'
+
+# Define endpoints
+a endpoint ipn:1.1 q
+a endpoint ipn:1.2 q
+a endpoint ipn:1.3 q
+a endpoint ipn:1.4 q
+
+# MQTT Convergence Layer Protocol
+# Parameters:
+#   - protocol name: mqtt
+#   - payload quota: 1400 bytes (typical MQTT payload size)
+#   - max inducts: 100
+a protocol mqtt 1400 100
+
+# MQTT Induct Configuration
+# This induct subscribes to ipn/1 topic on your MQTT broker
+# The duct name parameter is the topic suffix (node number)
+# Full topic will be: ipn/1
+a induct mqtt 1 mqttcli
+
+# MQTT Outduct Configuration
+# This outduct publishes bundles to ipn/2 topic
+# The duct name parameter is the topic suffix (remote node number)
+# Full topic will be: ipn/2
+a outduct mqtt 2 mqttclo
+
+s
+e 1
+## end bpadmin
+
+## begin ipnadmin
+# Define routing plan for remote node via MQTT
+a plan 2 mqtt/2
+
+# Define routing plan for self (loopback)
+a plan 1 mqtt/1
+e 1
+## end ipnadmin
+
+## begin ionsecadmin
+1
+e 1
+## end ionsecadmin
