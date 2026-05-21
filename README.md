@@ -200,29 +200,121 @@ ionstart -I your_config_file.rc
 
 ## Usage
 
-### Sending Bundles
+### Understanding mqttcli and mqttclo
 
-Use the standard ION `bpsource` or `bpsendfile` commands:
+The MQTT Convergence Layer consists of two daemons:
+
+#### **mqttcli** (Induct - Receives bundles)
+- Subscribes to an MQTT topic for your node
+- Receives bundles published to that topic
+- Delivers bundles to ION's Bundle Protocol Agent
+- Runs continuously as a daemon
+
+**Command-line syntax:**
+```bash
+mqttcli <duct_name>
+
+# Examples:
+mqttcli 1              # Subscribes to topic: ipn/1
+mqttcli ipn/1          # Same as above
+mqttcli ipn:1          # Same as above
+```
+
+**How it works:**
+1. ION starts `mqttcli` automatically when you run `ionstart`
+2. `mqttcli` connects to the MQTT broker specified in `mqtt.conf`
+3. It subscribes to the topic matching your node number (e.g., `ipn/1`)
+4. When bundles arrive via MQTT, it delivers them to ION
+5. Runs until ION shuts down or the daemon is manually stopped
+
+#### **mqttclo** (Outduct - Sends bundles)
+- Publishes DTN bundles to MQTT topics
+- Reads bundles from ION's outbound queue
+- Sends them to remote nodes via MQTT broker
+- Runs continuously as a daemon
+
+**Command-line syntax:**
+```bash
+mqttclo <duct_name>
+
+# Examples:
+mqttclo 2              # Publishes to topic: ipn/2
+mqttclo ipn/2          # Same as above
+mqttclo ipn:2          # Same as above
+```
+
+**How it works:**
+1. ION starts `mqttclo` automatically when you run `ionstart`
+2. `mqttclo` connects to the MQTT broker specified in `mqtt.conf`
+3. It monitors ION's outbound queue for bundles destined to its duct
+4. When a bundle is queued, it publishes to the destination topic (e.g., `ipn/2`)
+5. Waits for MQTT delivery confirmation before marking bundle as sent
+6. Runs until ION shuts down or the daemon is manually stopped
+
+### Manual Testing (Advanced)
+
+You can manually start the daemons for testing (ION must already be running):
 
 ```bash
-# Send a text message to node 2
+# Terminal 1: Start induct for node 1
+./mqttcli 1
+
+# Terminal 2: Start outduct for node 2
+./mqttclo 2
+
+# Terminal 3: Send a test bundle
+echo "Test message" | bpsource ipn:2.1
+```
+
+**Note:** In production, ION manages these daemons automatically based on your `.rc` configuration file.
+
+### Sending Bundles
+
+Use the standard ION `bpsource` or `bpsendfile` commands. When bundles are sent to a node with an MQTT outduct, `mqttclo` automatically handles transmission:
+
+```bash
+# Send a text message to node 2 (via MQTT)
 echo "Hello MQTT DTN World!" | bpsource ipn:2.1
 
-# Send a file
+# Send a file to node 2 (via MQTT)
 bpsendfile ipn:1.1 ipn:2.1 myfile.txt
+
+# Send with time-to-live (TTL) of 3600 seconds
+echo "Important data" | bpsource ipn:2.1 3600
+
+# Check outbound queue status
+bpstats
 ```
+
+**What happens behind the scenes:**
+1. Bundle is created by `bpsource` and queued in ION
+2. ION routing determines it should use MQTT (via the plan)
+3. Bundle is placed in the MQTT outduct queue
+4. `mqttclo` dequeues the bundle
+5. `mqttclo` publishes it to MQTT topic `ipn/2`
+6. Remote node's `mqttcli` receives and delivers it
 
 ### Receiving Bundles
 
-Use the standard ION `bpsink` or `bprecvfile` commands:
+Use the standard ION `bpsink` or `bprecvfile` commands. The `mqttcli` daemon automatically receives bundles from MQTT and delivers them to ION:
 
 ```bash
-# Receive and display bundles
+# Receive and display bundles at endpoint ipn:1.1
 bpsink ipn:1.1
 
-# Receive files
+# Receive files at endpoint ipn:1.1
 bprecvfile ipn:1.1
+
+# Count received bundles (use Ctrl+C to stop and see count)
+bpcounter ipn:1.1
 ```
+
+**What happens behind the scenes:**
+1. Remote node publishes bundle to MQTT topic `ipn/1`
+2. `mqttcli` receives the MQTT message (it's subscribed to `ipn/1`)
+3. `mqttcli` delivers the bundle to ION's Bundle Protocol Agent
+4. ION routes the bundle to the correct endpoint (e.g., `ipn:1.1`)
+5. `bpsink` receives and displays the bundle
 
 ### Monitoring
 
